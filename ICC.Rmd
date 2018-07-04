@@ -1,0 +1,330 @@
+---
+title: "ICC World Cup Case Study"
+author: "Bhavya Gupta"
+date: "Monday, September 25, 2017"
+output: word_document
+---
+
+### Problem statement
+
+Use the past ICC World Cup data available at cricinfo.
+
+Set up hypotheses to disprove the following Null hypotheses:
+
+* Tendulkar's  batting average is not better than Rahul Dravid's.
+* The Strike rates of Tendulkar and Dravid are the same
+* Percentage of of time Tendulkar gets out in single digits is the same as Dravid's
+* Dravid is more consistent than Tendulkar
+
+Finally, set up a problem that might allow you to do paired t test. 
+
+
+``` {r}
+df_Rahul_Dravid <- 
+  data.frame(Series = c("ICC World Cup (in England/Ireland/Netherlands/Scotland), 1999",
+                        "ICC World Cup (in Kenya/South Africa/Zimbabwe), 2002/03",
+                        "ICC World Cup (in West Indies), 2006/07"), 
+             Innings = c(8,10,3), 
+             avg = c(65.85, 63.6, 40.5),
+             SR = c(85.52, 64.11, 72.32))
+
+df_SR_Tendulkar <- 
+  data.frame(Series = 
+    c("Benson & Hedges World Cup (in Australia/New Zealand), 1991/92",
+      "Wills World Cup (in India/Pakistan/Sri Lanka), 1995/96",
+      "ICC World Cup (in England/Ireland/Netherlands/Scotland), 1999",
+      "ICC World Cup (in Kenya/South Africa/Zimbabwe), 2002/03",
+      "ICC World Cup (in West Indies), 2006/07",
+      "ICC Cricket World Cup (in Bangladesh/India/Sri Lanka), 2010/11"), 
+  Innings = c(7, 7, 7, 11, 3, 9), 
+  avg = c(47.16, 87.16, 42.16, 61.18, 32, 53.55),
+  SR = c(84.73, 85.87, 90.03, 89.25, 110.34, 91.98))
+
+#avg_df <- data.frame(SR = df_SR_Tendulkar$avg[c(3,4,5)], RD =df_Rahul_Dravid$avg )
+
+```
+
+
+#### Load required libraries
+
+```{r}
+
+library(ggplot2)
+
+## install scales package prior to use
+
+library(scales)
+
+library(car)
+
+library(gplots)
+
+```
+
+#### Write Useful functions
+
+``` {r}
+test_equalvar <- function(sample1, sample2) {
+  val <- c(sample1,sample2)
+  grp <- as.factor(c(rep(1,length(sample1)), rep(2,length(sample2))))
+  out <- levene.test(val,grp)
+  return(out["Pr(>F)"][1]) 
+}
+
+perform_t <- function(sample1,sample2) {
+  cat("\n\n")
+  print("Null Hypothesis: Samples Variances are equal")
+  cat("\n")
+  print("Alternative hypothesis: Sample variances are not equal")         
+  cat("\n\n")
+  p <-   test_equalvar(sample1, sample2)[1,1]
+  print(paste(" P value calculated by Levene\'s test is: ",p))
+#
+  if (p > 0.05)  {
+    print(paste("We conclude the variances are equal - Null hypothesis"))         
+    res <- t.test(sample1,sample2,alternative="less",var.equal = TRUE)
+  } else {
+    print(paste("We conclude the variances are not equal - Alternative hypothesis"))         
+    res <- t.test(sample1,sample2,alternative="less",var.equal = FALSE)
+  }   
+  
+  return(res)
+      
+}    
+
+```
+
+##### 1) Batting average 
+
+* Tendulkar's  batting average is not better than Rahul Dravid's.
+
+ 1 Test equality of variances
+
+
+In **statistics**, *Levene's test* is an inferential statistic used to assess the equality of variances for a variable calculated for two or more groups. It tests the null hypothesis that the population variances are equal (called homogeneity of variance or homoscedasticity). If the resulting p-value of Levene's test is less than some significance level (typically 0.05), the obtained difference in sample variances are unlikely to have occurred based on random sampling from a population with equal variances.
+
+* Null Hypothesis: Tendulkar's  batting average is not better than Rahul Dravid's
+
+* Alternative Hypothesis: Tendulkar's  batting average is better than Rahul Dravid's
+
+``` {r}
+
+sample1 <- df_SR_Tendulkar$avg
+sample2 <- df_Rahul_Dravid$avg
+p_val <- perform_t(sample1,sample2)$p.value  
+decision <- ifelse (p_val > 0.05,paste("Since p value : ",p_val, " > 5% Significance level -- > We accept Null hypothesis"), paste("Since p value : ",p_val, "< 5% significance level --> We reject Null hypothesis"))
+cat("\n\n Observation is ",decision)
+# Visual display
+
+par(mfrow = c(1,2))
+boxplot(df_SR_Tendulkar$avg, main = "Batting Average of Tendulkar")
+boxplot(df_Rahul_Dravid$avg, main = "Batting Average of Rahul Dravid")
+
+###
+```
+
+##### Observations
+
+Since p-value = 0.0.41566 at we accept the null hypothesis at confidence level 95% and conclude **Tendulkar's  batting average is not better than Rahul Dravid's**
+
+##### 2) Strike Rate 
+
+* The Strike rates of Tendulkar and Dravid are the same
+
+* Null Hypothesis: -The Strike rates of Tendulkar and Dravid are the same
+
+* Alternative Hypothesis: -The Strike rates of Tendulkar and Dravid are not same
+
+``` {r}
+
+sample1 <- df_SR_Tendulkar$SR
+sample2 <- df_Rahul_Dravid$SR
+p_val <- perform_t(sample1,sample2)$p.value  
+decision <- ifelse (p_val > 0.05,paste("Since p value : ",p_val, " > 5% Significance level -- > We accept Null hypothesis"), paste("Since p value : ",p_val, "< 5% significance level --> We reject Null hypothesis"))
+cat("\n\n Observation is ",decision)
+
+# Visual display
+
+par(mfrow = c(1,2))
+boxplot(df_SR_Tendulkar$SR, main = "Strike Rate of Tendulkar")
+boxplot(df_Rahul_Dravid$SR, main = "Strike Rate of Rahul Dravid")
+###
+```
+
+##### Observations
+
+Since p-value = .9824 at we accept the null hypothesis at confidence level 95% and conclude **The Strike rates of Tendulkar and Dravid are the same**
+
+##### 3) Single Digit getting out
+
+* Percentage of of time Tendulkar gets out in single digits is the same as Dravid's
+
+* Null Hypothesis: -The Strike rates of Tendulkar and Dravid are the same
+
+* Alternative Hypothesis: -Percentage of of time Tendulkar gets out in single digits is the same as Dravid's
+
+``` {r}
+single_digit <-matrix(c(2,19,9,35),ncol=2)
+colnames(single_digit) <- c('Rahul Dravid','Tendulkar')
+
+
+rownames(single_digit) <- c('Less than 10','Other')
+
+result.prop <- prop.test(single_digit)
+
+cat("\n P-value: ", result.prop$p.value)
+
+```
+
+##### Observations
+
+Since p-value = 0.456 at we accept the null hypothesis at confidence level 95% and conclude **Percentage of of time Tendulkar gets out in single digits is the same as Dravid's**
+
+
+##### 4) Batting consistency
+
+A coefficient of variation (CV) is a statistical measure of the dispersion of data points in a data series around the mean. The coefficient of variation represents the ratio of the standard deviation to the mean and it is a useful statistic for comparing the degree of variation from one data series to another, even if the means are drastically different from one another. 
+
+It is calculates as follows:
+
+CV = Standard Deviation / Mean value
+
+http://www.investopedia.com/terms/c/coefficientofvariation.asp
+
+We are going to test the following null hypothesis:
+
+* Dravid is more consistent than Tendulkar
+
+* Null Hypothesis: -Dravid is more consistent than Tendulkar
+
+* Alternative Hypothesis: -Dravid is not more consistent than Tendulkar
+
+``` {r}
+
+Sachin_runs <- c(35,11,0,81,4,84,14,0,70,90,137,3,31,65,28,0,2,22,0,45,16,  
+		 52,36,81,152,50,98,5,97,15,83,4,7,0,0,28,120,38,27,111,2,53,85,18)	
+
+Dravid_runs <- c(54,13,0,145,53,2,61,29,17,1,0,62,0,32,0,0,0,47,14,0,60)
+##
+SD_Sachin_runs   <- sd(Sachin_runs)
+SD_Dravid_runs   <- sd(Dravid_runs)
+Mean_Sachin_runs <- mean(Sachin_runs)
+Mean_Dravid_runs <- mean(Dravid_runs)
+COV_Sachin	 <- SD_Sachin_runs / Mean_Sachin_runs
+COV_Dravid	 <- SD_Sachin_runs / Mean_Dravid_runs
+
+cat("\n Co-variance of Sachin: ", COV_Sachin,"\n",
+    "Co-variance of Dravid: ", COV_Dravid,"\n")
+
+conclusion <- ifelse(COV_Sachin > COV_Dravid, "Dravid is more consistent because of lower covariance","Sachin is more consistent because of lower covariance")
+
+print(conclusion)
+```
+
+##### Observations
+
+**Sachin is more consistent than Tendulkar because of lower co-variance**
+
+
+##### 5)  Finally, set up a problem that might allow you to do paired t test. 
+
+We collect data of number of fours scored by both Sachin and Dravid during the ODIs they played together in ICC World cup.
+
+The paired sample t test is a statistical procedure used to determine whether the mean difference between two sets of observations is zero.
+
+
+* Null Hypothesis: -Dravid and Tendulkar has hit equal number of fours 
+
+* Alternative Hypothesis: -Number of Fours hit by Dravid and Tendulkar are not equal 
+
+##### Arrange data
+
+``` {r}
+
+Fours <-matrix(
+  c('ODI # 1444',5,5,
+    'ODI # 1457',  10, 16,
+    'ODI # 1463',17,0,
+    'ODI # 1467',6,2,
+    'ODI # 1473',0,0,
+    'ODI # 1476',4,5,
+    'ODI # 1480',5,2,
+    'ODI # 1948',0,7,
+    'ODI # 1951',0,3,
+    'ODI # 1957',2,10,
+    'ODI # 1969',3,8,
+    'ODI # 1975',2,12,
+    'ODI # 1983',3,1,
+    'ODI # 1985',2,7,
+    'ODI # 1988',7,3,
+    'ODI # 1992',0,5,
+    'ODI # 1993',2,1,
+    'ODI # 2538',0,1,
+    'ODI # 2542',0,2,
+    'ODI # 2550',6,0),byrow = T, nrow=20)
+Fours
+colnames(Fours) <- c("Match","Dravid","Sachin")
+
+```
+
+
+#####  Analysis of Boundary scored
+
+
+``` {r}
+
+n = 20
+df <- as.data.frame(Fours)
+df$Dravid <- as.numeric(df$Dravid)
+df$Sachin <- as.numeric(df$Sachin)
+
+data_means <- c(mean(df$Dravid), mean(df$Sachin))
+data_SD    <- c(sd(df$Dravid),sd(df$Sachin))
+data_SE    <- c(sd(df$Dravid),sd(df$Sachin)) / sqrt(n)
+
+barplot2(data_means, 
+    ci.l = data_means - data_SE, 
+    ci.u = data_means + data_SE, 
+    plot.ci = TRUE, ci.lty = 1, ci.color = 1, ci.lwd = 2, ci.width = 0.5, 
+    col = c("grey", "green"), lwd = 2, width = 0.25, 
+    xlab = "Batsmen", ylab = "Average Fours", 
+    names.arg = c("Sachin", "Dravid"), 
+    axis.lty = 1, main = "Error Bars =  +/- SE")
+
+  p <-   test_equalvar(df$Dravid, df$Sachin)[1,1]
+  print(paste(" P value calculated by Levene\'s test is: ",p))
+#
+  
+```
+
+
+###### Observation
+
+Variances are equal.
+
+### Conduct a paired t test
+
+``` {r}
+
+  if (p > 0.05)  {
+    print(paste("We conclude the variances are equal"))         
+    p_val <- t.test(df$Dravid,df$Sachin,paired=TRUE, alternative = "two.sided",var.equal = T)$p.value
+  } else {
+    print(paste("We conclude the variances are not equal"))         
+    p_val <- t.test(df$Dravid,df$Sachin,paired=TRUE, alternative = "two.sided",var.equal = FALSE)$p.value
+
+  }   
+
+
+cat("\n p-value: ", p_val,"\n")
+
+compare <- ifelse(p_val > 0.05, "We accept null hypothesis","We reject null hypothesis")
+
+print(compare)
+
+```
+
+###### Observation
+
+Since the p-value of 0.2026127 is > 5% (level of significance), we accept the null hypothesis at 95% level of confidence and conclude that
+**Dravid and Tendulkar has hit equal number of fours**.
