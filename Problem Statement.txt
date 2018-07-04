@@ -1,0 +1,10 @@
+
+########Problem Statement#########
+
+Use the past ICC World Cup data available at cricinfo.
+Set up hypotheses to disprove the following Null hypotheses
+-Tendulkar's  batting average is not better than Rahul Dravid's.
+-The Strike rates of Tendulkar and Dravid are the same
+-Percentage of of time Tendulkar gets out in single digits is the same as Dravid's
+-Dravid is more consistent than Tendulkar
+Finally, set up a problem that might allow you to do balanced t test.
